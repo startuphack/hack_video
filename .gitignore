@@ -35,3 +35,6 @@ catboost_training.json
 *csv
 *parquet
 *zip
+*mdl
+models
+/example/
