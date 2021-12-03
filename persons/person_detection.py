@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Iterator
 
 import numpy as np
 import face_recognition
 import cv2
 from sklearn.cluster import DBSCAN
+
+from .db import PersonDB
 
 
 @dataclass
@@ -19,13 +21,16 @@ class FacesTimeline:
     encodings: List[np.ndarray] = field(default_factory=list)
 
 
-def scrap_faces(filepath: str, sampling_rate: int = 10, resize_rate = 1.) -> FacesTimeline:
+def iter_frames(
+    filepath: str, 
+    sampling_rate: int = 10,
+    resize_rate = 1.,
+) -> Iterator[Tuple[float, np.ndarray]]:
     assert 0 < resize_rate <= 1
 
     cap = cv2.VideoCapture(filepath)
     fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-    timeline = FacesTimeline()
     frame_number = 0
     try:
         while True:
@@ -42,13 +47,7 @@ def scrap_faces(filepath: str, sampling_rate: int = 10, resize_rate = 1.) -> Fac
                 frame = cv2.resize(frame, (0, 0), fx=resize_rate, fy=resize_rate)
 
             rgb_frame = frame[:, :, ::-1]  # BGR -> RGB
-
-            _locations = face_recognition.face_locations(rgb_frame)
-            _encodings = face_recognition.face_encodings(rgb_frame, _locations)
-            for location, encoding in zip(_locations, _encodings):
-                timeline.timestamps.append(timestamp)
-                timeline.locations.append(location)
-                timeline.encodings.append(encoding)
+            yield timestamp, rgb_frame
 
     finally:
         cap.release()
@@ -62,7 +61,28 @@ def clusterize_encodings(encodings: List[np.ndarray], **kwargs) -> np.ndarray:
 
 
 def process_file(filepath: str):
-    timeline: FacesTimeline = scrap_faces(filepath, sampling_rate=100)
+    db = PersonDB('persons.db')
+    timeline = FacesTimeline()
+
+    for timestamp, frame in iter_frames(filepath, sampling_rate=100):
+
+        _locations = face_recognition.face_locations(frame)
+        _encodings = face_recognition.face_encodings(frame, _locations)
+        for location, encoding in zip(_locations, _encodings):
+            timeline.timestamps.append(timestamp)
+            timeline.locations.append(location)
+            timeline.encodings.append(encoding)
+
     labels = clusterize_encodings(timeline.encodings)
     unique_labels, counts = np.unique(labels, return_counts=True)
+
+    mean_encodings = [
+        np.stack(timeline.encodings)[labels == label].mean(axis=0)
+        for label in unique_labels
+    ]
+    for idx, encoding in enumerate(mean_encodings):
+        person = db.find(encoding)
+        if person is None:
+            continue
+
     # todo
