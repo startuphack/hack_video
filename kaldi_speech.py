@@ -3,6 +3,7 @@ import subprocess
 import wave
 from copy import deepcopy, copy
 import logging
+import sys
 
 from sklearn.cluster import AgglomerativeClustering
 from vosk import Model, KaldiRecognizer, SpkModel, SetLogLevel
@@ -65,6 +66,7 @@ class KaldiProcessor:
                  replacement_overlap_percent=0.8,
                  diarization_algorithm=None,
                  borrowings='default',
+                 max_len=sys.maxsize
                  ):
         self.text_models_pathes = text_models_pathes
         self.speaker_model_path = speaker_model_path
@@ -76,6 +78,7 @@ class KaldiProcessor:
         self.borrowings = borrowings
         self.replacement_confidence = replacement_confidence
         self.replacement_overlap_percent = replacement_overlap_percent
+        self.max_len = max_len
 
         if borrowings == 'default':
             with open('borrowings.json') as borr_stream:
@@ -99,8 +102,13 @@ class KaldiProcessor:
     def _do_find_tokens(self, frame_source):
         result = [list() for _ in self.text_models_pathes]
         speakers = list()
+        stop_frames = False
         for data in frame_source:
+            if stop_frames:
+                break
             for mdl_idx, rec in enumerate(self.text_models):
+                if stop_frames:
+                    break
                 if rec.AcceptWaveform(data):
                     res = json.loads(rec.Result())
                     res_list = res['result']
@@ -109,6 +117,8 @@ class KaldiProcessor:
                         if mdl_idx == 0:  # только у первой модели есть speaker model
                             start_date = res_list[0]['start']
                             stop_date = res_list[-1]['end']
+                            if stop_date > self.max_len:
+                                stop_frames = True
 
                             logging.info(f'working with frame [{start_date},{stop_date}]')
                             if 'spk' in res:

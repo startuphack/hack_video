@@ -19,7 +19,9 @@ if __name__ == '__main__':
                         type=str, help="input mp4 file")
 
     parser.add_argument("--text-embeddings", default=True, type=str2bool, help="add text embeddings to layers")
+    parser.add_argument("--find-peoples", default=True, type=str2bool, help="find persons in video stream")
     parser.add_argument("--verbose", default=True, type=str2bool, help="verbosity to video parsing")
+    parser.add_argument("--max-length", default=60, type=int, help="maximum parsing time in seconds")
 
     args = parser.parse_args()
     if args.verbose:

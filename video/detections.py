@@ -1,4 +1,5 @@
 import logging
+import sys
 from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import List, Tuple, Iterator, Optional
@@ -10,7 +11,6 @@ import torch
 from sklearn.cluster import DBSCAN
 
 from .db import PersonDB, PersonItem
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,9 @@ class FacesTimeline:
 
 
 def iter_frames(
-    filepath: str, 
+    filepath: str,
     sampling_rate: int = 10,
-    resize_rate = 1.,
+    resize_rate=1.,
 ) -> Iterator[Tuple[float, np.ndarray]]:
     assert 0 < resize_rate <= 1
 
@@ -98,6 +98,7 @@ def process_file(
     db_path: str,
     sampling_rate: int = 4,
     resize_rate: float = 1,
+    max_len=sys.maxsize,
 ) -> MetaData:
     db = PersonDB(db_path)
     yolo_model = torch.hub.load('ultralytics/yolov5', model='yolov5s', pretrained=True)
@@ -105,6 +106,8 @@ def process_file(
     timeline = FacesTimeline()
     total_frames = 0
     for timestamp, frame in iter_frames(filepath, sampling_rate=sampling_rate, resize_rate=resize_rate):
+        if timestamp > max_len:
+            break
 
         for face_location, face_encoding in detect_faces(frame):
             timeline.timestamps.append(timestamp)
@@ -144,4 +147,3 @@ def process_file(
             for label, timestamps in person_timestamps.items()
         ],
     )
-
