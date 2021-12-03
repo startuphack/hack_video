@@ -50,7 +50,7 @@ def process_file(mp4_file, args=None):
         objects_df = pd.DataFrame.from_records(
             [
                 (timestamp, ' '.join(yolo_tags))
-                for timestamp, yolo_tags in persons_data.objects
+                for timestamp, yolo_tags in persons_data.objects.items()
                 if yolo_tags
             ],
             columns=['timestamp', 'yolo_tags'],
