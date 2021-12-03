@@ -31,7 +31,7 @@ def process_file(mp4_file, args=None):
 
     tokens_df = pd.DataFrame(ok_tokens)
 
-    if args.sentinent:
+    if args.sentiment:
         model = SlidingEmbedder(embedder=get_sentinent)
         sentiments = model.make_embeddings(tokens_df.start, tokens_df.word)
         result_layers['sentinent'] = sentiments
