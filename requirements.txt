@@ -11,3 +11,6 @@ tensorflow_text==2.7.3
 pandas==1.3.4
 torch==1.7.1
 torchvision==0.8.2
+pyyaml
+matplotlib
+seaborn

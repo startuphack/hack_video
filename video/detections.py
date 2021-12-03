@@ -121,7 +121,7 @@ def process_file(
             objects_timestamps[timestamp].append(object_name)
 
         total_frames += 1
-        logger.info('Processed frame %s', total_frames)
+        logger.info(f'Processed frame {total_frames}; current time = {timestamp}')
 
     labels = clusterize_encodings(faces_timeline.encodings)
 
