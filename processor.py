@@ -8,7 +8,7 @@ from text_embeddings import SlidingEmbedder
 def get_full_text(tokens_list):
     return ' '.join(token['word'] for token in tokens_list)
 
-from video.detections import process_file
+from video.detections import process_file as process_video
 from sentiment import get_sentinent
 
 
@@ -44,7 +44,7 @@ def process_file(mp4_file, args=None):
         result_layers['text-embeddings'] = embeddings
 
     if args.find_peoples:
-        persons_data = process_file(mp4_file, 'video/persons.db', max_len=args.max_length)
+        persons_data = process_video(mp4_file, 'video/persons.db', max_len=args.max_length)
         result_layers['persons'] = persons_data
 
         objects_df = pd.DataFrame.from_records(
