@@ -55,8 +55,8 @@ class KaldiProcessor:
     def __init__(self,
                  text_models_pathes,
                  speaker_model_path,
-                 search_confidence=0.95,
-                 remove_confidence=0.05,
+                 search_confidence=0.75,
+                 remove_confidence=0.25,
                  replacement_confidence=0.9,
                  speakers_threshold=0.6,
                  min_speaker_frames=600,
@@ -149,7 +149,14 @@ class KaldiProcessor:
                     if overlap / (token['end'] - token['start']) > self.replacement_overlap_percent:
                         replacing_with = self.borrowings[best_match_replacement['word']]
                         logging.info(f'replacing {token} with {best_match_replacement} ({replacing_with})')
-                        result.append(replacing_with)
+                        result.append(
+                            {
+                                'conf': best_match_replacement['conf'],
+                                'end': best_match_replacement['end'],
+                                'start': best_match_replacement['start'],
+                                'word': replacing_with['word']
+                            }
+                        )
                         replaced = True
 
                 if not replaced:
@@ -176,7 +183,7 @@ class KaldiProcessor:
                 affinity='cos'
             )
 
-        speakers = [copy(token) for token in speakers if token['spk-frames'] >= self.min_speaker_frames]
+        speakers = [copy(token) for token in speakers if token['spk_frames'] >= self.min_speaker_frames]
 
         vectors = [token['vector'] for token in speakers]
 

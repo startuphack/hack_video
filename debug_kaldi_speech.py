@@ -20,7 +20,15 @@ def make_result():
 
     pickle_dump(result, 'processed_result.gz.mdl')
 
-if __name__ == '__main__':
+def debug_merge_tokens():
     results = pickle_load('processed_result.gz.mdl')
     # print(results)
-    KaldiProcessor([],'').merge_tokens(results)
+    KaldiProcessor([], '').merge_tokens(results)
+
+def debug_diarization():
+    results = pickle_load('processed_result.gz.mdl')
+    # print(results)
+    KaldiProcessor([], '').find_speakers(results)
+
+if __name__ == '__main__':
+    debug_merge_tokens()
