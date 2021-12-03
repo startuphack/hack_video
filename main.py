@@ -31,4 +31,5 @@ if __name__ == '__main__':
 
     result = process_file(args.input_file, args)
 
-    print(result)
+    with open('parse.out', 'w') as f:
+        print(result, file=f)
