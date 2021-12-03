@@ -1,10 +1,8 @@
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
-from utils.files import pickle_load
+from files import pickle_load
 import numpy as np
 
-# https://wq2012.github.io/awesome-diarization/
-# ! http://www.ifp.illinois.edu/~hning2/papers/Ning_spectral.pdf
-# https://github.com/wq2012/SpectralCluster
+
 if __name__ == '__main__':
     vectors = pickle_load('speakers.gz.mdl')
 
