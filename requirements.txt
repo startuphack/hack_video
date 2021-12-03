@@ -14,3 +14,7 @@ torchvision==0.8.2
 pyyaml
 matplotlib
 seaborn
+navec
+slovnet
+ipymarkup
+natasha

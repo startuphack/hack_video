@@ -1,5 +1,10 @@
 import pandas as pd
 from kaldi_speech import KaldiProcessor, ffmpeg_source
+from ner_text import get_default_ners
+
+
+def get_full_text(tokens_list):
+    return ' '.join(token['word'] for token in tokens_list)
 
 
 def process_file(mp4_file, args=None):
@@ -10,11 +15,14 @@ def process_file(mp4_file, args=None):
 
     SPEAKER_MODEL = 'models/vosk-model-spk-0.4'
 
-    processor = KaldiProcessor(MODELS_PATHES, SPEAKER_MODEL, max_len = args.max_length)
+    processor = KaldiProcessor(MODELS_PATHES, SPEAKER_MODEL, max_len=args.max_length)
 
     result_layers = processor.get_layers(ffmpeg_source(mp4_file))
 
     ok_tokens = result_layers['text-tokens']
+    full_text = get_full_text(ok_tokens)
+    ner_dict = get_default_ners(full_text)
+    result_layers['named-entities'] = ner_dict
 
     tokens_df = pd.DataFrame(ok_tokens)
 
@@ -28,7 +36,7 @@ def process_file(mp4_file, args=None):
 
     if args.find_peoples:
         from video.detections import process_file
-        persons_data = process_file(mp4_file, 'video/persons.db', max_len = args.max_length)
+        persons_data = process_file(mp4_file, 'video/persons.db', max_len=args.max_length)
         result_layers['persons'] = persons_data
 
     return result_layers
