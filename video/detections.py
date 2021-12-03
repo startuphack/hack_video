@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from collections import defaultdict
-from typing import List, Tuple, Iterator, Optional
+from typing import List, Tuple, Iterator, Optional, Dict
 
 import numpy as np
 import face_recognition
@@ -74,6 +74,7 @@ class Person:
 @dataclass
 class MetaData:
     persons: List[Person]
+    objects: Dict[float, List[str]]
 
 
 def detect_faces(frame):
@@ -82,15 +83,15 @@ def detect_faces(frame):
     return list(zip(locations, encodings))
 
 
-def detect_objects(yolo_model, frame):
+def detect_objects(yolo_model, frame, min_confidence: float) -> List[str]:
     detection = yolo_model([frame])
     objs = detection.xywh[0].cpu().data.numpy()
-    xywh, confidence, class_idx = objs[:, 0:4], objs[:, 4], objs[:, 5]
-    min_confidence = 0.65
+    confidence, class_idx = objs[:, 4], objs[:, 5]
     mask = (np.isin(class_idx, class_idx)) & np.array(confidence >= min_confidence)
-    classes = class_idx[mask]
-    labels = [yolo_model.names[int(class_idx)] for class_idx in classes]
-    return labels
+    return [
+        yolo_model.names[int(class_idx)]
+        for class_idx in class_idx[mask]
+    ]
 
 
 def process_file(
@@ -102,25 +103,27 @@ def process_file(
     db = PersonDB(db_path)
     yolo_model = torch.hub.load('ultralytics/yolov5', model='yolov5s', pretrained=True)
 
-    timeline = FacesTimeline()
+    faces_timeline = FacesTimeline()
     total_frames = 0
+    objects_timestamps = defaultdict(list)
+
     for timestamp, frame in iter_frames(filepath, sampling_rate=sampling_rate, resize_rate=resize_rate):
 
         for face_location, face_encoding in detect_faces(frame):
-            timeline.timestamps.append(timestamp)
-            timeline.locations.append(face_location)
-            timeline.encodings.append(face_encoding)
+            faces_timeline.timestamps.append(timestamp)
+            faces_timeline.locations.append(face_location)
+            faces_timeline.encodings.append(face_encoding)
 
-        objects = detect_objects(yolo_model, frame)
-        print(objects)
+        for object_name in detect_objects(yolo_model, frame, min_confidence=0.65):
+            objects_timestamps[timestamp].append(object_name)
 
         total_frames += 1
         logger.info('Processed frame %s', total_frames)
 
-    labels = clusterize_encodings(timeline.encodings)
+    labels = clusterize_encodings(faces_timeline.encodings)
 
     mean_encodings = {
-        label: np.stack(timeline.encodings)[labels == label].mean(axis=0)
+        label: np.stack(faces_timeline.encodings)[labels == label].mean(axis=0)
         for label in np.unique(labels)
     }
 
@@ -131,7 +134,7 @@ def process_file(
             known_persons[label] = person
 
     person_timestamps = defaultdict(list)
-    for timestamp, label in zip(timeline.timestamps, labels):
+    for timestamp, label in zip(faces_timeline.timestamps, labels):
         person_timestamps[label].append(timestamp)
 
     return MetaData(
@@ -143,5 +146,6 @@ def process_file(
             )
             for label, timestamps in person_timestamps.items()
         ],
+        objects=objects_timestamps,
     )
 
