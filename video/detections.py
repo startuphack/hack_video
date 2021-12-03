@@ -1,12 +1,18 @@
+import logging
 from dataclasses import dataclass, field
-from typing import List, Tuple, Iterator
+from collections import defaultdict
+from typing import List, Tuple, Iterator, Optional
 
 import numpy as np
 import face_recognition
 import cv2
+import torch
 from sklearn.cluster import DBSCAN
 
-from .db import PersonDB
+from .db import PersonDB, PersonItem
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -58,29 +64,84 @@ def clusterize_encodings(encodings: List[np.ndarray], **kwargs) -> np.ndarray:
     return model.fit_predict(encodings)
 
 
-def process_file(filepath: str):
-    db = PersonDB('persons.db')
+@dataclass
+class Person:
+    timestamps: List[float]
+    ratio: float
+    db_item: Optional[PersonItem]
+
+
+@dataclass
+class MetaData:
+    persons: List[Person]
+
+
+def detect_faces(frame):
+    locations = face_recognition.face_locations(frame)
+    encodings = face_recognition.face_encodings(frame, locations)
+    return list(zip(locations, encodings))
+
+
+def detect_objects(yolo_model, frame):
+    detection = yolo_model([frame])
+    objs = detection.xywh[0].cpu().data.numpy()
+    xywh, confidence, class_idx = objs[:, 0:4], objs[:, 4], objs[:, 5]
+    min_confidence = 0.65
+    mask = (np.isin(class_idx, class_idx)) & np.array(confidence >= min_confidence)
+    classes = class_idx[mask]
+    labels = [yolo_model.names[int(class_idx)] for class_idx in classes]
+    return labels
+
+
+def process_file(
+    filepath: str,
+    db_path: str,
+    sampling_rate: int = 4,
+    resize_rate: float = 1,
+) -> MetaData:
+    db = PersonDB(db_path)
+    yolo_model = torch.hub.load('ultralytics/yolov5', model='yolov5s', pretrained=True)
+
     timeline = FacesTimeline()
+    total_frames = 0
+    for timestamp, frame in iter_frames(filepath, sampling_rate=sampling_rate, resize_rate=resize_rate):
 
-    for timestamp, frame in iter_frames(filepath, sampling_rate=100):
-
-        _locations = face_recognition.face_locations(frame)
-        _encodings = face_recognition.face_encodings(frame, _locations)
-        for location, encoding in zip(_locations, _encodings):
+        for face_location, face_encoding in detect_faces(frame):
             timeline.timestamps.append(timestamp)
-            timeline.locations.append(location)
-            timeline.encodings.append(encoding)
+            timeline.locations.append(face_location)
+            timeline.encodings.append(face_encoding)
+
+        objects = detect_objects(yolo_model, frame)
+        print(objects)
+
+        total_frames += 1
+        logger.info('Processed frame %s', total_frames)
 
     labels = clusterize_encodings(timeline.encodings)
-    unique_labels, counts = np.unique(labels, return_counts=True)
 
-    mean_encodings = [
-        np.stack(timeline.encodings)[labels == label].mean(axis=0)
-        for label in unique_labels
-    ]
-    for idx, encoding in enumerate(mean_encodings):
-        person = db.find(encoding)
-        if person is None:
-            continue
+    mean_encodings = {
+        label: np.stack(timeline.encodings)[labels == label].mean(axis=0)
+        for label in np.unique(labels)
+    }
 
-    # todo
+    known_persons = {}
+    for label, face_encoding in mean_encodings.items():
+        person = db.find(face_encoding)
+        if person is not None:
+            known_persons[label] = person
+
+    person_timestamps = defaultdict(list)
+    for timestamp, label in zip(timeline.timestamps, labels):
+        person_timestamps[label].append(timestamp)
+
+    return MetaData(
+        persons=[
+            Person(
+                timestamps=timestamps,
+                ratio=len(timestamps) / total_frames,
+                db_item=known_persons.get(label),
+            )
+            for label, timestamps in person_timestamps.items()
+        ],
+    )
+
