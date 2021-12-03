@@ -18,3 +18,5 @@ navec
 slovnet
 ipymarkup
 natasha
+dostoevsky
+transformers

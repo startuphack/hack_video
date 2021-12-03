@@ -21,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument("--text-embeddings", default=True, type=str2bool, help="add text embeddings to layers")
     parser.add_argument("--find-peoples", default=True, type=str2bool, help="find persons in video stream")
     parser.add_argument("--sentiment", default=True, type=str2bool, help="add sentiment analysis to layers")
+    parser.add_argument("--summarize", default=True, type=str2bool, help="add sber-gpt3 summarization layer")
     parser.add_argument("--verbose", default=True, type=str2bool, help="verbosity to video parsing")
     parser.add_argument("--max-length", default=60, type=int, help="maximum parsing time in seconds")
 

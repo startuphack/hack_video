@@ -31,13 +31,18 @@ def process_file(mp4_file, args=None):
 
     tokens_df = pd.DataFrame(ok_tokens)
 
+    if args.summarize:
+        from summarization import do_summarize
+        model = SlidingEmbedder(embedder=do_summarize)
+        sentiments = model.make_embeddings(tokens_df.start, tokens_df.word)
+        result_layers['summary'] = sentiments
+
     if args.sentinent:
         model = SlidingEmbedder(embedder=get_sentinent)
         sentiments = model.make_embeddings(tokens_df.start, tokens_df.word)
         result_layers['sentinent'] = sentiments
 
     if args.text_embeddings:
-
         model = SlidingEmbedder()
         embeddings = model.make_embeddings(tokens_df.start, tokens_df.word)
 
