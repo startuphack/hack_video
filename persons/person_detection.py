@@ -52,8 +52,6 @@ def iter_frames(
     finally:
         cap.release()
 
-    return timeline
-
 
 def clusterize_encodings(encodings: List[np.ndarray], **kwargs) -> np.ndarray:
     model = DBSCAN(**kwargs)
