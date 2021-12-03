@@ -3,6 +3,7 @@ import pandas as pd
 from kaldi_speech import KaldiProcessor, ffmpeg_source
 from text_embeddings import SlidingEmbedder
 from video.detections import process_file
+from sentiment import get_sentinent
 
 
 def process_file(mp4_file, args=None):
@@ -20,6 +21,11 @@ def process_file(mp4_file, args=None):
     ok_tokens = result_layers['text-tokens']
 
     tokens_df = pd.DataFrame(ok_tokens)
+
+    if args.sentinent:
+        model = SlidingEmbedder(embedder=get_sentinent)
+        sentiments = model.make_embeddings(tokens_df.start, tokens_df.word)
+        result_layers['sentinent'] = sentiments
 
     if args.text_embeddings:
 
