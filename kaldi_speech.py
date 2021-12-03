@@ -5,9 +5,11 @@ from copy import deepcopy, copy
 import logging
 
 from sklearn.cluster import AgglomerativeClustering
-from vosk import Model, KaldiRecognizer, SpkModel
+from vosk import Model, KaldiRecognizer, SpkModel, SetLogLevel
 
 SAMPLE_RATE = 16000
+
+SetLogLevel(0)
 
 
 def overlaps(token1, token2):
@@ -107,6 +109,8 @@ class KaldiProcessor:
                         if mdl_idx == 0:  # только у первой модели есть speaker model
                             start_date = res_list[0]['start']
                             stop_date = res_list[-1]['end']
+
+                            logging.info(f'working with frame [{start_date},{stop_date}]')
                             if 'spk' in res:
                                 speaker_vector = res['spk']
                                 speakers.append({
@@ -165,6 +169,16 @@ class KaldiProcessor:
                 pass  # Мы слишком не уверены в результате - не добавляем токен
 
         return result
+
+    def get_layers(self, frame_source):
+        pure_data = self._do_find_tokens(frame_source)
+        merged_tokens = self.merge_tokens(pure_data)
+        diarisation = self.find_speakers(pure_data)
+
+        return {
+            'text-tokens': merged_tokens,
+            'speakers': diarisation,
+        }
 
     # https://wq2012.github.io/awesome-diarization/
     # ! http://www.ifp.illinois.edu/~hning2/papers/Ning_spectral.pdf
