@@ -1,3 +1,7 @@
 vosk==0.3.32
 numpy==1.21.4
+scikit-learn==1.0.1httpx==0.21.1
+opencv-python==4.5.4.60
 scikit-learn==1.0.1
+face-recognition==1.3.0
+face-recognition-models==0.3.0
