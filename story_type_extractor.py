@@ -5,6 +5,9 @@ import numpy as np
 
 
 def get_story_type(speakers):
+    '''
+    В зависимости от спикеров пытаемся определить тип новостного сюжета
+    '''
     speaker_stats = defaultdict(list)
     for speaker_id, speaker_entries in it.groupby(speakers, lambda x: x['speaker-id']):
         speaker_entries = list(speaker_entries)

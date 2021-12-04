@@ -11,6 +11,10 @@ EMBEDDER = hub.load(MODEL_URL)
 
 
 class SlidingEmbedder:
+    '''
+    Модуль для построения мультиязыковых ембеддингов по скользящим окнам
+    Двигаем окно, агрегируем текста/метки - строим вложения
+    '''
     def __init__(self, embedder=EMBEDDER, agg_delay=120):
         self.agg_delay = agg_delay
         self.embedder = embedder

@@ -31,6 +31,9 @@ names_extractor = NamesExtractor(morph_vocab)
 
 
 def get_default_ners(text):
+    '''
+    Извлекаем и нормализуем именованные сущности. Текст у нас не отформатирован, лучше вего извлекаются локации, фио и бренды
+    '''
     text = ' '.join(map(str.capitalize, text.split(' ')))
     doc = Doc(text)
     doc.segment(segmenter)

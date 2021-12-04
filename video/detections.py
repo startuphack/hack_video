@@ -84,6 +84,11 @@ def detect_faces(frame):
 
 
 def detect_objects(yolo_model, frame, min_confidence: float) -> List[str]:
+    '''
+    Используем Yolo5 для детекции объектов
+
+    :return:
+    '''
     detection = yolo_model([frame])
     objs = detection.xywh[0].cpu().data.numpy()
     confidence, class_idx = objs[:, 4], objs[:, 5]
@@ -101,6 +106,10 @@ def process_file(
     resize_rate: float = 1,
     max_len=sys.maxsize,
 ) -> MetaData:
+    '''
+    Ищем лица, ищем объекты. Добавляем слои с найдеными лицами и метками объектов в результат
+
+    '''
     db = PersonDB(db_path)
     yolo_model = torch.hub.load('ultralytics/yolov5', model='yolov5s', pretrained=True)
 

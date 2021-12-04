@@ -15,6 +15,10 @@ from sentiment import get_sentinent
 
 
 def process_file(mp4_file, args=None):
+    '''
+    Здесь мы объединяем заполнение всех слоев разными модулями
+
+    '''
     MODELS_PATHES = [
         'models/vosk-model-small-ru-0.22',  # основная модель
         'models/vosk-model-small-en-us-0.15'  # модель для поиска англицизмов

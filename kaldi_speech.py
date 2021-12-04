@@ -55,6 +55,9 @@ def ffmpeg_source(mp4_file, chunk_size=SAMPLE_RATE * 4):
 
 # https://ru.wiktionary.org/w/index.php?title=%D0%9A%D0%B0%D1%82%D0%B5%D0%B3%D0%BE%D1%80%D0%B8%D1%8F:%D0%A1%D0%BB%D0%BE%D0%B2%D0%B0_%D0%B0%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%BE%D0%B3%D0%BE_%D0%BF%D1%80%D0%BE%D0%B8%D1%81%D1%85%D0%BE%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F/ru&pagefrom=%D0%B0%D0%B1%D0%B8%D0%BB%D0%B8%D1%82%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D1%8B%D0%B9#mw-pages
 class KaldiProcessor:
+    '''
+    Модуль kaldi-парсинга с англицизмами
+    '''
     def __init__(self,
                  text_models_pathes,
                  speaker_model_path,
@@ -136,6 +139,11 @@ class KaldiProcessor:
         }
 
     def merge_tokens(self, results):
+        '''
+        Здесь исправляем токены, в случае, если текущая kaldi модель в токене не увернеа
+        В этом случае смотрим, что распознали другие модели.
+        Если модели уверены и слово - англицизм, подменям слово в результате
+        '''
         tokens = results['tokens']
         replacements = list()
         for replace_tokens in tokens[1:]:
@@ -194,6 +202,10 @@ class KaldiProcessor:
     # ! http://www.ifp.illinois.edu/~hning2/papers/Ning_spectral.pdf
     # https://github.com/wq2012/SpectralCluster
     def find_speakers(self, results):
+        '''
+        Ищем спикеров агломеративной кластеризацией
+        У нас есть список векторов по спикерам. Кластеризуем и размечаем с учетом времени
+        '''
         speakers = results['speakers']
 
         if self.diarization_algorithm:

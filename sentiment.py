@@ -10,4 +10,7 @@ model = FastTextSocialNetworkModel(tokenizer=tokenizer)
 
 
 def get_sentinent(text: str):
+    '''
+    Строим сентименты достоевским по скользящему окну
+    '''
     return model.predict([text], k=2)[0]

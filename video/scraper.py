@@ -20,6 +20,9 @@ async def query_persons(
     limit: int = 100,
     offset: int = 0,
 ) -> List[PersonItem]:
+    '''
+    Загружаем известных лиц из википедии и складываем это в бд вместе с картинками
+    '''
     query = '''
         SELECT DISTINCT ?person ?personLabel ?personDescription ?image WHERE {
           ?person wdt:P31 wd:Q5. # Human

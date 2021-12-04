@@ -15,6 +15,9 @@ model_casual_lm = AutoModelForCausalLM.from_pretrained(model_name)
 
 # https://huggingface.co/IlyaGusev/rugpt3medium_sum_gazeta
 def do_summarize(article_text):
+    '''
+    Берем GPT от сбера, по скользящему окну строим саммари по предложениям.
+    '''
     text_tokens = auto_tokenizer(
         article_text,
         max_length=600,
