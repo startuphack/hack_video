@@ -1,12 +1,13 @@
 # Модуль извлечения данных из видеороликов
 
-
+### Установка
 ```bash
 python3.8 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Использование
 ```bash
 usage: main.py [-h] [--input-file INPUT_FILE] [--text-embeddings TEXT_EMBEDDINGS]
                [--find-peoples FIND_PEOPLES] [--sentiment SENTIMENT] [--summarize SUMMARIZE]
