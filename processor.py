@@ -3,6 +3,8 @@ import pandas as pd
 from kaldi_speech import KaldiProcessor, ffmpeg_source
 from ner_text import get_default_ners
 from text_embeddings import SlidingEmbedder
+from story_type_extractor import get_story_type
+import logging
 
 
 def get_full_text(tokens_list):
@@ -30,6 +32,11 @@ def process_file(mp4_file, args=None):
     result_layers['named-entities'] = ner_dict
 
     tokens_df = pd.DataFrame(ok_tokens)
+    try:
+        story_type = get_story_type(result_layers['speakers'])
+        result_layers['story-type'] = story_type
+    except:
+        logging.error('problem extracting story type')
 
     if args.summarize:
         from summarization import do_summarize
